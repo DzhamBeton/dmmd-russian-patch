@@ -1,0 +1,18 @@
+﻿[Script Info]
+Title: DRAMAtical Murder Russian patch - mvdot014
+ScriptType: v4.00+
+PlayResX: 384
+PlayResY: 336
+ScaledBorderAndShadow: no
+WrapStyle: 2
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Pixel,Consolas,12,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,1,0,1,0,0,7,0,0,0,204
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:03.20,0:00:22.46,Pixel,,0,0,0,,{\an7\pos(0,0)\p1\1c&H000000&}m 96 208 l 289 208 289 250 96 250
+Dialogue: 1,0:00:03.20,0:00:05.90,Pixel,,0,0,0,,{\pos(100,211)}"СПАСИ МЕНЯ"
+Dialogue: 1,0:00:06.20,0:00:11.90,Pixel,,0,0,0,,{\pos(100,211)}"КТО-НИБУДЬ, ПРОШУ......"
+Dialogue: 1,0:00:12.20,0:00:22.46,Pixel,,0,0,0,,{\pos(100,211)}"СПАСИ МЕНЯ ОТСЮДА......"

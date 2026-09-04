@@ -1,0 +1,3 @@
+[submodule "tools/dramatical-murder-nut-tool"]
+	path = tools/dramatical-murder-nut-tool
+	url = https://github.com/darktohka/dramatical-murder-nut-tool.git

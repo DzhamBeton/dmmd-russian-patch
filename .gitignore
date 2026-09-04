@@ -1,0 +1,13 @@
+work/
+tools/MwareStuff-bin/
+tools/MwareStuff.7z
+tools/MwareStuff/
+translations/*.jsonl
+tools/ffmpeg/
+tools/ffmpeg.zip
+tools/python-packages/
+logs/
+**/__pycache__/
+*.pyc
+release/
+dist/

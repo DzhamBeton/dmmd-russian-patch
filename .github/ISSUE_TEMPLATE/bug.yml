@@ -1,0 +1,24 @@
+name: Техническая ошибка
+description: Ошибка установки, запуска или отображения
+title: "[Ошибка] "
+labels: ["bug"]
+body:
+  - type: textarea
+    attributes:
+      label: Описание
+      description: Что произошло и чего вы ожидали?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Как воспроизвести
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Сообщение патчера или скриншот
+  - type: input
+    attributes:
+      label: Версия игры и русификатора
+    validations:
+      required: true

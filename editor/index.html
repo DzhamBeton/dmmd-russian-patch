@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DMMD — редактор перевода</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, "Segoe UI", sans-serif; background:#11151b; color:#e8edf2 }
+    * { box-sizing:border-box } body { margin:0 } button,input,select,textarea { font:inherit }
+    header { display:flex; gap:12px; align-items:center; padding:12px 18px; background:#1b222c; position:sticky; top:0; z-index:2 }
+    header input { flex:1; min-width:180px } input,select,textarea,button { color:#e8edf2; background:#252e3a; border:1px solid #3a4656; border-radius:7px; padding:8px 10px }
+    button { cursor:pointer } button:hover { background:#334052 } button.primary { background:#176b87 }
+    main { max-width:1180px; margin:auto; padding:18px } .meta { color:#9fb0c2; margin-bottom:12px }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px } .panel { background:#1a2029; border:1px solid #303a47; border-radius:10px; padding:14px }
+    textarea { width:100%; min-height:310px; resize:vertical; line-height:1.35 } .source { white-space:pre-wrap; min-height:310px; line-height:1.35; color:#c8d3dd }
+    .toolbar { display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin-top:14px } .toolbar .grow { flex:1 }
+    .warning { color:#ffbd66 } .saved { color:#73d6a0 } kbd { background:#333d49; padding:2px 5px; border-radius:4px }
+    @media(max-width:760px){ .grid{grid-template-columns:1fr} header{flex-wrap:wrap} }
+  </style>
+</head>
+<body>
+<header>
+  <input id="search" placeholder="Поиск по оригиналу, переводу или ID…">
+  <select id="file"><option value="">Все файлы</option></select>
+  <select id="filter">
+    <option value="all">Все записи</option><option value="translated">С переводом</option>
+    <option value="untranslated">Без перевода</option><option value="reviewed">Проверенные</option>
+    <option value="needs-context">Нужен контекст</option><option value="needs-fit">Не помещается</option>
+    <option value="translation-error">Ошибка машинного перевода</option>
+  </select>
+</header>
+<main>
+  <div class="meta" id="meta">Загрузка…</div>
+  <div class="grid">
+    <section class="panel"><h3>Оригинал</h3><div class="source" id="source"></div></section>
+    <section class="panel" id="draftPanel"><h3>Черновик Qwen</h3><div class="source" id="draft"></div></section>
+    <section class="panel"><h3 id="translationTitle">Перевод</h3><textarea id="translation" spellcheck="true"></textarea></section>
+  </div>
+  <div class="toolbar">
+    <button id="prev">← Назад</button><button id="next">Вперёд →</button>
+    <select id="status"><option value="machine-translated">Машинный</option><option value="reviewed">Проверено</option><option value="needs-context">Нужен контекст</option><option value="needs-fit">Не помещается</option><option value="translation-error">Ошибка перевода</option><option value="skip">Пропустить</option><option value="new">Новый</option></select>
+    <span id="measure"></span><span class="grow"></span><span id="saveState"></span>
+    <button class="primary" id="save">Сохранить <kbd>Ctrl+S</kbd></button>
+  </div>
+</main>
+<script>
+let all=[], shown=[], index=0, dirty=false;
+const $=id=>document.getElementById(id);
+function visibleUnits(text){let n=0; for(const c of text.replace(/<[^>]+>/g,'')){n += 'ЖШЩФЮМW@%'.includes(c)?1.45:' .,!:;\'|ijlI()[]«»'.includes(c)?.55:1} return n}
+function refreshFilter(){const q=$('search').value.toLowerCase(), f=$('file').value, mode=$('filter').value; shown=all.filter(r=>(!f||r.file===f)&&(!q||(r.id+' '+r.source+' '+r.translation).toLowerCase().includes(q))&&(mode==='all'||mode==='translated'&&r.translation||mode==='untranslated'&&!r.translation||r.status===mode)); index=Math.min(index,Math.max(0,shown.length-1)); render()}
+function render(){const r=shown[index]; if(!r){$('meta').textContent='Нет записей'; $('source').textContent=''; $('translation').value=''; return} const hasDraft=!!r.draftTranslation; $('draftPanel').style.display=hasDraft?'block':'none'; $('translationTitle').textContent=hasDraft?'Постредактура':'Перевод'; $('draft').textContent=r.draftTranslation||''; $('meta').textContent=`${index+1} / ${shown.length} · ${r.id} · ${r.file}${r.hasVoice?' · озвученная реплика':''}${r.polishStatus?' · '+r.polishStatus:''}`; $('source').textContent=r.source; $('translation').value=r.translation; $('status').value=r.status||'new'; dirty=false; measure(); $('saveState').textContent=''}
+function measure(){const t=$('translation').value, lines=Math.max(1,Math.ceil(visibleUnits(t)/36)); $('measure').textContent=`${t.length} знаков · примерно ${lines} стр.`; $('measure').className=lines>3?'warning':''}
+async function save(){const r=shown[index]; if(!r)return; r.translation=$('translation').value; r.status=$('status').value; $('saveState').textContent='Сохранение…'; const res=await fetch('/api/record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:r.id,translation:r.translation,status:r.status})}); if(!res.ok){$('saveState').textContent='Ошибка сохранения';return} dirty=false; $('saveState').textContent='Сохранено'; $('saveState').className='saved'}
+async function move(delta){if(dirty)await save(); index=Math.max(0,Math.min(shown.length-1,index+delta)); render()}
+$('translation').addEventListener('input',()=>{dirty=true;measure();$('saveState').textContent='Изменено'}); $('status').addEventListener('change',()=>dirty=true); $('save').onclick=save; $('prev').onclick=()=>move(-1); $('next').onclick=()=>move(1); ['search','file','filter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',()=>{index=0;refreshFilter()}));
+document.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key.toLowerCase()==='s'){e.preventDefault();save()}else if(e.altKey&&e.key==='ArrowRight')move(1);else if(e.altKey&&e.key==='ArrowLeft')move(-1)});
+fetch('/api/catalog').then(r=>r.json()).then(data=>{all=data.records; [...new Set(all.map(r=>r.file))].sort().forEach(f=>$('file').add(new Option(f,f))); refreshFilter()});
+</script>
+</body>
+</html>

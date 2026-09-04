@@ -1,0 +1,25 @@
+name: Ошибка перевода
+description: Неверная, непонятная или не помещающаяся реплика
+title: "[Перевод] "
+labels: ["translation"]
+body:
+  - type: textarea
+    attributes:
+      label: Что написано сейчас?
+      description: Приведите реплику и несколько предшествующих строк.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Как должно быть?
+      description: Предложите исправление, если можете.
+  - type: textarea
+    attributes:
+      label: Скриншот или сохранение
+      description: Перетащите сюда файлы, помогающие воспроизвести ошибку.
+  - type: input
+    attributes:
+      label: Версия русификатора
+      placeholder: v0.1.0
+    validations:
+      required: true
