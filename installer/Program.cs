@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 [assembly: System.Reflection.AssemblyTitle("DMMD Russian Patch")]
 [assembly: System.Reflection.AssemblyProduct("Русификатор DRAMAtical Murder")]
-[assembly: System.Reflection.AssemblyVersion("0.2.0.0")]
+[assembly: System.Reflection.AssemblyVersion("0.3.0.0")]
 
 namespace DmmdRussianPatch
 {
@@ -37,14 +37,14 @@ namespace DmmdRussianPatch
 
         public MainForm()
         {
-            Text = "Русификатор DRAMAtical Murder — v0.2.0";
+            Text = "Русификатор DRAMAtical Murder — v0.3.0";
             ClientSize = new Size(650, 390);
             MinimumSize = new Size(600, 350);
             StartPosition = FormStartPosition.CenterScreen;
             Font = new Font("Segoe UI", 9F);
 
-            Label title = new Label { Text = "Русификатор для GOG Base / Unrated", AutoSize = true, Font = new Font("Segoe UI", 14F, FontStyle.Bold), Location = new Point(18, 16) };
-            Label hint = new Label { Text = "Укажите папку, в которой находится DMMd.exe", AutoSize = true, Location = new Point(20, 55) };
+            Label title = new Label { Text = "Русификатор для Steam / GOG Base / Unrated", AutoSize = true, Font = new Font("Segoe UI", 14F, FontStyle.Bold), Location = new Point(18, 16) };
+            Label hint = new Label { Text = "Укажите папку игры с DMMd.exe или DMMd_en_Steam.exe", AutoSize = true, Location = new Point(20, 55) };
             pathBox.Location = new Point(22, 78); pathBox.Width = 520; pathBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             browseButton.Text = "Обзор…"; browseButton.Location = new Point(552, 76); browseButton.Width = 78; browseButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             installButton.Text = "Установить"; installButton.Location = new Point(22, 116); installButton.Width = 130;
@@ -65,12 +65,19 @@ namespace DmmdRussianPatch
         {
             string[] common = {
                 @"F:\DRAMAtical Murder",
+                @"F:\SteamLibrary\steamapps\common\DRAMAtical Murder",
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GOG Galaxy", "Games", "DRAMAtical Murder"),
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "GOG Galaxy", "Games", "DRAMAtical Murder"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam", "steamapps", "common", "DRAMAtical Murder"),
                 @"C:\GOG Games\DRAMAtical Murder"
             };
-            foreach (string path in common) if (File.Exists(Path.Combine(path, "DMMd.exe"))) return path;
+            foreach (string path in common) if (IsGameFolder(path)) return path;
             return "";
+        }
+
+        private static bool IsGameFolder(string path)
+        {
+            return File.Exists(Path.Combine(path, "DMMd.exe")) || File.Exists(Path.Combine(path, "DMMd_en_Steam.exe"));
         }
 
         private void Browse()
@@ -86,9 +93,9 @@ namespace DmmdRussianPatch
         private void StartWork(bool install)
         {
             string gamePath = pathBox.Text.Trim().Trim('"');
-            if (!File.Exists(Path.Combine(gamePath, "DMMd.exe")))
+            if (!IsGameFolder(gamePath))
             {
-                MessageBox.Show(this, "В выбранной папке не найден DMMd.exe.", "Неверная папка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, "В выбранной папке не найден DMMd.exe или DMMd_en_Steam.exe.", "Неверная папка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             SetBusy(true);
@@ -96,7 +103,8 @@ namespace DmmdRussianPatch
             {
                 try
                 {
-                    if (Process.GetProcessesByName("DMMd").Length != 0) throw new InvalidOperationException("Сначала закройте игру.");
+                    if (Process.GetProcessesByName("DMMd").Length != 0 || Process.GetProcessesByName("DMMd_en_Steam").Length != 0)
+                        throw new InvalidOperationException("Сначала закройте игру.");
                     if (install) Install(gamePath); else Uninstall(gamePath);
                     Invoke((MethodInvoker)delegate { MessageBox.Show(this, install ? "Русификатор успешно установлен." : "Оригинальные файлы восстановлены.", "Готово", MessageBoxButtons.OK, MessageBoxIcon.Information); });
                 }
@@ -123,7 +131,7 @@ namespace DmmdRussianPatch
                 selected[i] = SelectCompatiblePatch(target, payload, item, backup);
             }
             WriteLog(selected[0].EndsWith("script-base.dmpatch", StringComparison.OrdinalIgnoreCase)
-                ? "Определена версия: GOG Base."
+                ? "Определена версия: Base (Steam/GOG)."
                 : "Определена версия: GOG Unrated.");
             for (int i = 0; i < files.Length; i++)
             {

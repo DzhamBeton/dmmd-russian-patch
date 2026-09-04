@@ -20,6 +20,6 @@ body:
   - type: input
     attributes:
       label: Версия русификатора
-      placeholder: v0.2.0
+      placeholder: v0.3.0
     validations:
       required: true
