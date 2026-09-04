@@ -12,7 +12,7 @@ New-Item -ItemType Directory -Path (Join-Path $Dist "payload") -Force | Out-Null
 & $Compiler /nologo /target:winexe /optimize+ /platform:anycpu /win32manifest:"$Root\installer\app.manifest" /reference:System.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /out:"$Dist\DMMD-Rus-Patcher.exe" "$Root\installer\Program.cs"
 if ($LASTEXITCODE -ne 0) { throw "Ошибка компиляции патчера" }
 
-Copy-Item -LiteralPath "$Root\release\payload\script.dmpatch","$Root\release\payload\font.dmpatch","$Root\release\payload\dx.dmpatch" -Destination (Join-Path $Dist "payload") -Force
+Copy-Item -Path "$Root\release\payload\*.dmpatch" -Destination (Join-Path $Dist "payload") -Force
 Copy-Item -LiteralPath "$Root\README.md" -Destination (Join-Path $Dist "README.txt") -Force
 
 $Checksums = Get-ChildItem $Dist -Recurse -File | ForEach-Object {

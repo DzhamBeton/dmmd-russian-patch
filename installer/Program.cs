@@ -10,15 +10,15 @@ using System.Windows.Forms;
 
 [assembly: System.Reflection.AssemblyTitle("DMMD Russian Patch")]
 [assembly: System.Reflection.AssemblyProduct("Русификатор DRAMAtical Murder")]
-[assembly: System.Reflection.AssemblyVersion("0.1.0.0")]
+[assembly: System.Reflection.AssemblyVersion("0.2.0.0")]
 
 namespace DmmdRussianPatch
 {
     internal sealed class PatchInfo
     {
         public string FileName;
-        public string PatchName;
-        public PatchInfo(string fileName, string patchName) { FileName = fileName; PatchName = patchName; }
+        public string[] PatchNames;
+        public PatchInfo(string fileName, params string[] patchNames) { FileName = fileName; PatchNames = patchNames; }
     }
 
     internal sealed class MainForm : Form
@@ -30,20 +30,20 @@ namespace DmmdRussianPatch
         private readonly ProgressBar progress = new ProgressBar();
         private readonly TextBox log = new TextBox();
         private readonly PatchInfo[] files = {
-            new PatchInfo("script.npk", "script.dmpatch"),
+            new PatchInfo("script.npk", "script-base.dmpatch", "script-unrated.dmpatch"),
             new PatchInfo("font.npk", "font.dmpatch"),
             new PatchInfo("dx.npk", "dx.dmpatch")
         };
 
         public MainForm()
         {
-            Text = "Русификатор DRAMAtical Murder — v0.1.0";
+            Text = "Русификатор DRAMAtical Murder — v0.2.0";
             ClientSize = new Size(650, 390);
             MinimumSize = new Size(600, 350);
             StartPosition = FormStartPosition.CenterScreen;
             Font = new Font("Segoe UI", 9F);
 
-            Label title = new Label { Text = "Русификатор для GOG Unrated-версии", AutoSize = true, Font = new Font("Segoe UI", 14F, FontStyle.Bold), Location = new Point(18, 16) };
+            Label title = new Label { Text = "Русификатор для GOG Base / Unrated", AutoSize = true, Font = new Font("Segoe UI", 14F, FontStyle.Bold), Location = new Point(18, 16) };
             Label hint = new Label { Text = "Укажите папку, в которой находится DMMd.exe", AutoSize = true, Location = new Point(20, 55) };
             pathBox.Location = new Point(22, 78); pathBox.Width = 520; pathBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             browseButton.Text = "Обзор…"; browseButton.Location = new Point(552, 76); browseButton.Width = 78; browseButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
@@ -114,21 +114,25 @@ namespace DmmdRussianPatch
         private void Install(string gamePath)
         {
             string payload = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "payload");
-            foreach (PatchInfo item in files)
-            {
-                string target = Path.Combine(gamePath, item.FileName);
-                string backup = target + ".dmmd-rus-backup";
-                ValidateCompatibility(target, Path.Combine(payload, item.PatchName), backup);
-            }
+            string[] selected = new string[files.Length];
             for (int i = 0; i < files.Length; i++)
             {
                 PatchInfo item = files[i];
                 string target = Path.Combine(gamePath, item.FileName);
-                string patch = Path.Combine(payload, item.PatchName);
+                string backup = target + ".dmmd-rus-backup";
+                selected[i] = SelectCompatiblePatch(target, payload, item, backup);
+            }
+            WriteLog(selected[0].EndsWith("script-base.dmpatch", StringComparison.OrdinalIgnoreCase)
+                ? "Определена версия: GOG Base."
+                : "Определена версия: GOG Unrated.");
+            for (int i = 0; i < files.Length; i++)
+            {
+                PatchInfo item = files[i];
+                string target = Path.Combine(gamePath, item.FileName);
+                string patch = selected[i];
                 string backup = target + ".dmmd-rus-backup";
                 SetProgress(i * 100 / files.Length);
                 WriteLog("Проверка " + item.FileName + "…");
-                if (!File.Exists(patch)) throw new FileNotFoundException("Не найден файл патча: " + item.PatchName);
                 ApplyPatch(target, patch, backup);
                 WriteLog(item.FileName + " — готово.");
             }
@@ -199,27 +203,31 @@ namespace DmmdRussianPatch
             finally { if (File.Exists(temp)) File.Delete(temp); }
         }
 
-        private static void ValidateCompatibility(string target, string patchPath, string backup)
+        private static string SelectCompatiblePatch(string target, string payload, PatchInfo item, string backup)
         {
             if (!File.Exists(target)) throw new FileNotFoundException("Не найден " + Path.GetFileName(target));
-            if (!File.Exists(patchPath)) throw new FileNotFoundException("Не найден файл патча: " + Path.GetFileName(patchPath));
-            using (BinaryReader patch = new BinaryReader(File.OpenRead(patchPath)))
+            FileInfo info = new FileInfo(target);
+            byte[] currentHash = HashFile(target);
+            foreach (string patchName in item.PatchNames)
             {
-                if (Encoding.ASCII.GetString(patch.ReadBytes(4)) != "DMP1") throw new InvalidDataException("Повреждён файл патча.");
-                long sourceSize = patch.ReadInt64();
-                patch.ReadInt64();
-                byte[] sourceHash = patch.ReadBytes(32);
-                byte[] targetHash = patch.ReadBytes(32);
-                FileInfo info = new FileInfo(target);
-                byte[] currentHash = HashFile(target);
-                if (BytesEqual(currentHash, targetHash))
+                string patchPath = Path.Combine(payload, patchName);
+                if (!File.Exists(patchPath)) throw new FileNotFoundException("Не найден файл патча: " + patchName);
+                using (BinaryReader patch = new BinaryReader(File.OpenRead(patchPath)))
                 {
-                    if (!File.Exists(backup)) throw new InvalidDataException(Path.GetFileName(target) + " уже изменён, но резервная копия отсутствует.");
-                    return;
+                    if (Encoding.ASCII.GetString(patch.ReadBytes(4)) != "DMP1") throw new InvalidDataException("Повреждён файл патча: " + patchName);
+                    long sourceSize = patch.ReadInt64();
+                    patch.ReadInt64();
+                    byte[] sourceHash = patch.ReadBytes(32);
+                    byte[] targetHash = patch.ReadBytes(32);
+                    if (BytesEqual(currentHash, targetHash))
+                    {
+                        if (!File.Exists(backup)) throw new InvalidDataException(Path.GetFileName(target) + " уже изменён, но резервная копия отсутствует.");
+                        return patchPath;
+                    }
+                    if (info.Length == sourceSize && BytesEqual(currentHash, sourceHash)) return patchPath;
                 }
-                if (info.Length != sourceSize || !BytesEqual(currentHash, sourceHash))
-                    throw new InvalidDataException(Path.GetFileName(target) + " не соответствует поддерживаемой GOG Unrated-версии или уже изменён другим модом.");
             }
+            throw new InvalidDataException(Path.GetFileName(target) + " не соответствует поддерживаемой GOG Base/Unrated-версии или уже изменён другим модом.");
         }
 
         private static void CopyExactly(Stream input, Stream output, int bytes)
