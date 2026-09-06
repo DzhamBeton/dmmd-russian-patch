@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 [assembly: System.Reflection.AssemblyTitle("DMMD Russian Patch")]
 [assembly: System.Reflection.AssemblyProduct("Русификатор DRAMAtical Murder")]
-[assembly: System.Reflection.AssemblyVersion("0.3.0.0")]
+[assembly: System.Reflection.AssemblyVersion("0.4.0.0")]
 
 namespace DmmdRussianPatch
 {
@@ -32,12 +32,13 @@ namespace DmmdRussianPatch
         private readonly PatchInfo[] files = {
             new PatchInfo("script.npk", "script-base.dmpatch", "script-unrated.dmpatch"),
             new PatchInfo("font.npk", "font.dmpatch"),
-            new PatchInfo("dx.npk", "dx.dmpatch")
+            new PatchInfo("dx.npk", "dx.dmpatch"),
+            new PatchInfo("cg.npk", "cg-startup-card.dmpatch")
         };
 
         public MainForm()
         {
-            Text = "Русификатор DRAMAtical Murder — v0.3.0";
+            Text = "Русификатор DRAMAtical Murder — v0.4.0";
             ClientSize = new Size(650, 390);
             MinimumSize = new Size(600, 350);
             StartPosition = FormStartPosition.CenterScreen;
