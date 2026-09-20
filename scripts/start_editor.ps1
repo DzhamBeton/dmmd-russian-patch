@@ -1,5 +1,5 @@
 param(
-    [string]$Catalog = "translations\ru-machine.jsonl",
+    [string]$Catalog = "translations\ru-polished.jsonl",
     [int]$Port = 8765
 )
 

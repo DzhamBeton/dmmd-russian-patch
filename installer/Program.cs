@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 [assembly: System.Reflection.AssemblyTitle("DMMD Russian Patch")]
 [assembly: System.Reflection.AssemblyProduct("Русификатор DRAMAtical Murder")]
-[assembly: System.Reflection.AssemblyVersion("0.4.0.0")]
+[assembly: System.Reflection.AssemblyVersion("0.5.0.0")]
 
 namespace DmmdRussianPatch
 {
@@ -38,7 +38,7 @@ namespace DmmdRussianPatch
 
         public MainForm()
         {
-            Text = "Русификатор DRAMAtical Murder — v0.4.0";
+            Text = "Русификатор DRAMAtical Murder — v0.5.0";
             ClientSize = new Size(650, 390);
             MinimumSize = new Size(600, 350);
             StartPosition = FormStartPosition.CenterScreen;

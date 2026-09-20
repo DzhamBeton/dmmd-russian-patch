@@ -14,7 +14,10 @@ from urllib.parse import urlparse
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VOICE_PREFIX_RE = re.compile(r"(?ms)^(\s*//【[^\r\n]*】\s*\r?\n<voice[^>]+>\s*)")
+# Keep the technical prefix, but treat whitespace after <voice> as presentation
+# whitespace. It must not be written back or it creates a blank first text line.
+# Some records contain a voice tag without the preceding character comment.
+VOICE_PREFIX_RE = re.compile(r"(?ms)^((?:\s*//【[^\r\n]*】\s*\r?\n)?\s*<voice[^>]+>)\s*")
 
 
 class Catalog:
@@ -27,7 +30,7 @@ class Catalog:
     @staticmethod
     def visible(text: str) -> str:
         match = VOICE_PREFIX_RE.match(text)
-        return text[len(match.group(1)) :] if match else text
+        return text[match.end() :] if match else text
 
     def public_rows(self) -> list[dict]:
         result = []
